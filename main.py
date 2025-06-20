@@ -16,7 +16,7 @@ from jira_issue_service import JiraIssueService
 from jira_connection import JiraConnection
 
 
-def setup_logging():
+def setup_logging() -> None:
     """
     Configures colorized logging for the application.
     """
@@ -34,7 +34,7 @@ def setup_logging():
     logging.basicConfig(level=logging.INFO, handlers=[handler])
 
 
-def get_jira_connection():
+def get_jira_connection() -> object | None:
     """
     Establishes and returns a Jira connection using environment variables.
     Returns:
@@ -48,7 +48,7 @@ def get_jira_connection():
     return jira
 
 
-def fetch_usernames():
+def fetch_usernames() -> 'list[str] | None':
     """
     Fetches the list of Jira usernames from the USERNAMES environment variable.
     Returns:
@@ -61,7 +61,7 @@ def fetch_usernames():
     return jira_users.split(',')
 
 
-def process_issues(issue_service, usernames, pi):
+def process_issues(issue_service: JiraIssueService, usernames: list[str], pi: str) -> dict:
     """
     Processes issues for each user and calculates total story points.
     Args:
@@ -73,7 +73,7 @@ def process_issues(issue_service, usernames, pi):
     """
     user_story_points = {}
     for username in usernames:
-        issues = issue_service.fetch_issues(username, pi)
+        issues = issue_service.fetch_issues_by_username(username, pi)
         print(f"## Jira tickets for {username}")
         if issues:
             total_custom_field_value = 0
@@ -96,15 +96,12 @@ def process_issues(issue_service, usernames, pi):
                 print(
                     f"#### [{issue['key']}] | {issue_type} | {issue['fields']['summary']} | Points: {custom_field_value}")
 
-                status_name = 'In Development'
-                history_items = issue_service.get_time_in_status(
-                    issue['key'], status_name)
+                history_items = issue_service.get_issue_history(issue['key'])
                 # Print all HistoryItem objects in the list
-                print(f"- Logs related to {status_name} for {issue['key']}")
+                print(f"- Logs related to {issue['key']}")
                 for item in history_items:
-                    if item.from_status == status_name or item.to_status == status_name:
-                        print(
-                            f"  - **{item.from_status}** -> **{item.to_status}** by _{item.author}_ on {item.created}")
+                    print(
+                        f"  - **{item.from_status}** -> **{item.to_status}** by _{item.author}_ on {item.created}")
 
             print("\n")
             print(f"### Total {pi} Story Points: {total_custom_field_value}\n")
@@ -114,7 +111,7 @@ def process_issues(issue_service, usernames, pi):
     return user_story_points
 
 
-def plot_story_points(user_story_points, pi):
+def plot_story_points(user_story_points: dict, pi: str) -> None:
     """
     Plots a bar chart of total story points completed by each user.
     Args:
@@ -140,7 +137,7 @@ def plot_story_points(user_story_points, pi):
     plt.show()
 
 
-def main():
+def main() -> None:
     """
     Main entry point for the Jira API App.
     Sets up logging, loads environment variables, connects to Jira, 
